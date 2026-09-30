@@ -4,7 +4,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AppProviders } from "@/components/providers";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Winterarc";
+const APP_NAME = "WINTER ARC";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "Winterarc workout dashboard — log training, weight, protein, and steps for Oct–Dec 2026.",
+        content: "WINTER ARC training journal — log workouts, weight, protein, and steps for Oct–Dec 2026.",
       },
       { name: "theme-color", content: "#0a0c10" },
     ],

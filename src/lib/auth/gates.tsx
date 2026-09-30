@@ -74,14 +74,14 @@ export function UserButton() {
         <img
           src={user.profileImageUrl}
           alt=""
-          className="h-8 w-8 rounded-full object-cover"
+          className="h-9 w-9 rounded-full object-cover"
         />
       ) : (
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-black/10 text-sm font-medium dark:bg-white/20">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border bg-surface text-sm font-medium text-fg">
           {label.charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="text-sm font-medium">{label}</span>
+      <span className="hidden max-w-40 truncate text-sm font-medium sm:inline">{label}</span>
       {authEnabled && (
         <button
           type="button"
@@ -91,7 +91,7 @@ export function UserButton() {
             // Success navigates away; on failure re-enable so it can be retried.
             void signOut().catch(() => setSigningOut(false));
           }}
-          className="cursor-pointer text-sm underline-offset-4 opacity-70 hover:underline disabled:cursor-wait disabled:no-underline"
+          className="min-h-11 whitespace-nowrap px-2 text-xs text-muted underline-offset-4 transition-colors hover:text-fg hover:underline disabled:cursor-wait disabled:no-underline sm:text-sm"
         >
           {signingOut ? "Signing out…" : "Sign out"}
         </button>
