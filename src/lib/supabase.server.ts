@@ -1,33 +1,20 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "@/lib/env.server";
+import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./supabase-config";
 
-const supabaseUrl =
-  env("SUPABASE_URL") ?? "https://qybkheiaeikfphdteklp.supabase.co";
-
-let client: SupabaseClient | undefined;
-
-export function isSupabaseConfigured(): boolean {
-  return Boolean(env("SUPABASE_SECRET_KEY"));
-}
-
-export function getSupabase(): SupabaseClient {
+export function getSupabase(accessToken: string) {
   if (typeof window !== "undefined") {
-    throw new Error("Supabase is server-only; call it from a server function.");
+    throw new Error("Supabase server client cannot be used in the browser.");
   }
+  if (!accessToken.trim()) throw new Error("A Supabase access token is required.");
 
-  if (client) return client;
-
-  const secretKey = env("SUPABASE_SECRET_KEY");
-  if (!secretKey) {
-    throw new Error("Missing server-side SUPABASE_SECRET_KEY configuration.");
-  }
-
-  client = createClient(supabaseUrl, secretKey, {
+  return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
       persistSession: false,
     },
+    global: {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
   });
-  return client;
 }

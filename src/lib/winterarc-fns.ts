@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase.server";
+import { getSupabase } from "@/lib/supabase.server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { DEFAULT_GOALS, type DailyLog, type DashboardPayload, type UserGoals } from "@/lib/types";
 
@@ -58,18 +57,8 @@ function toLog(row: LogRow): DailyLog {
   };
 }
 
-async function ensureProfile(userId: string) {
-  if (!isSupabaseConfigured()) {
-    const sql = await getSql();
-    await sql`
-      insert into winterarc_profiles (user_id)
-      values (${userId})
-      on conflict (user_id) do nothing
-    `;
-    return;
-  }
-
-  const { error } = await getSupabase()
+async function ensureProfile(userId: string, accessToken: string) {
+  const { error } = await getSupabase(accessToken)
     .from("winterarc_profiles")
     .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
   if (error) throw error;
@@ -78,27 +67,8 @@ async function ensureProfile(userId: string) {
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<DashboardPayload> => {
-    await ensureProfile(context.userId);
-    if (!isSupabaseConfigured()) {
-      const sql = await getSql();
-      const profiles = await sql<ProfileRow>`
-        select target_weight, daily_protein, daily_steps, workouts_per_week
-        from winterarc_profiles
-        where user_id = ${context.userId}
-      `;
-      const logs = await sql<LogRow>`
-        select log_date, workouts, weight, protein, steps, notes
-        from winterarc_logs
-        where user_id = ${context.userId}
-        order by log_date asc
-      `;
-      return {
-        goals: toGoals(profiles[0]),
-        logs: logs.map(toLog),
-      };
-    }
-
-    const supabase = getSupabase();
+    const supabase = getSupabase(context.supabaseAccessToken);
+    await ensureProfile(context.userId, context.supabaseAccessToken);
     const { data: profile, error: profileError } = await supabase
       .from("winterarc_profiles")
       .select("target_weight, daily_protein, daily_steps, workouts_per_week")
@@ -124,40 +94,7 @@ export const saveLog = createServerFn({ method: "POST" })
   .validator((input: DailyLog) => input)
   .handler(async ({ context, data }): Promise<DailyLog> => {
     const notes = data.notes?.trim() ? data.notes.trim() : null;
-    if (!isSupabaseConfigured()) {
-      const sql = await getSql();
-      const workoutsJson = JSON.stringify(data.workouts ?? []);
-      await sql`
-        insert into winterarc_logs (user_id, log_date, workouts, weight, protein, steps, notes, updated_at)
-        values (
-          ${context.userId},
-          ${data.date}::date,
-          ${workoutsJson}::jsonb,
-          ${data.weight},
-          ${data.protein},
-          ${data.steps},
-          ${notes},
-          now()
-        )
-        on conflict (user_id, log_date) do update set
-          workouts = excluded.workouts,
-          weight = excluded.weight,
-          protein = excluded.protein,
-          steps = excluded.steps,
-          notes = excluded.notes,
-          updated_at = now()
-      `;
-      return {
-        date: data.date,
-        workouts: data.workouts ?? [],
-        weight: data.weight,
-        protein: data.protein,
-        steps: data.steps,
-        notes: notes ?? undefined,
-      };
-    }
-
-    const { error } = await getSupabase()
+    const { error } = await getSupabase(context.supabaseAccessToken)
       .from("winterarc_logs")
       .upsert(
         {
@@ -188,31 +125,7 @@ export const saveGoals = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: UserGoals) => input)
   .handler(async ({ context, data }): Promise<UserGoals> => {
-    if (!isSupabaseConfigured()) {
-      const sql = await getSql();
-      await sql`
-        insert into winterarc_profiles (
-          user_id, target_weight, daily_protein, daily_steps, workouts_per_week, updated_at
-        )
-        values (
-          ${context.userId},
-          ${data.targetWeight},
-          ${data.dailyProtein},
-          ${data.dailySteps},
-          ${data.workoutsPerWeek},
-          now()
-        )
-        on conflict (user_id) do update set
-          target_weight = excluded.target_weight,
-          daily_protein = excluded.daily_protein,
-          daily_steps = excluded.daily_steps,
-          workouts_per_week = excluded.workouts_per_week,
-          updated_at = now()
-      `;
-      return data;
-    }
-
-    const { error } = await getSupabase()
+    const { error } = await getSupabase(context.supabaseAccessToken)
       .from("winterarc_profiles")
       .upsert(
         {

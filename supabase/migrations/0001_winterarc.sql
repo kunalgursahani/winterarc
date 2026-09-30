@@ -25,7 +25,18 @@ create index if not exists winterarc_logs_user_id_idx
 alter table public.winterarc_profiles enable row level security;
 alter table public.winterarc_logs enable row level security;
 
-revoke all on table public.winterarc_profiles, public.winterarc_logs
-  from anon, authenticated;
-grant all on table public.winterarc_profiles, public.winterarc_logs
-  to service_role;
+grant select, insert, update, delete
+  on table public.winterarc_profiles, public.winterarc_logs
+  to authenticated;
+
+drop policy if exists winterarc_profiles_owner on public.winterarc_profiles;
+create policy winterarc_profiles_owner on public.winterarc_profiles
+  for all to authenticated
+  using (user_id = (select auth.uid())::text)
+  with check (user_id = (select auth.uid())::text);
+
+drop policy if exists winterarc_logs_owner on public.winterarc_logs;
+create policy winterarc_logs_owner on public.winterarc_logs
+  for all to authenticated
+  using (user_id = (select auth.uid())::text)
+  with check (user_id = (select auth.uid())::text);

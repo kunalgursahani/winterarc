@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Snowflake } from "lucide-react";
-import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { OAUTH_PROVIDERS } from "@/lib/auth/providers";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,12 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/login")({ component: Login });
 
 function Login() {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending, error: sessionError } = useCurrentUserState();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (isPending) {
@@ -33,20 +35,39 @@ function Login() {
     setError(null);
     try {
       if (mode === "signup") {
-        const res = await authClient.signUp.email({
+        const res = await authClient.auth.signUp({
           email,
           password,
-          name: name.trim() || email.split("@")[0],
-          callbackURL: "/",
+          options: {
+            data: { full_name: name.trim() || email.split("@")[0] },
+            emailRedirectTo: window.location.origin,
+          },
         });
-        if (res.error) throw new Error(res.error.message || "Could not create account");
+        if (res.error) throw res.error;
+        if (!res.data.session) {
+          setNotice("Check your email to confirm your account, then sign in.");
+          setBusy(false);
+          return;
+        }
       } else {
-        const res = await authClient.signIn.email({ email, password, callbackURL: "/" });
-        if (res.error) throw new Error(res.error.message || "Could not sign in");
+        const res = await authClient.auth.signInWithPassword({ email, password });
+        if (res.error) throw res.error;
       }
       window.location.assign("/");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
+      setBusy(false);
+    }
+  };
+
+  const signInWithProvider = async (provider: "google" | "twitter") => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await signIn(provider);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sign-in failed");
       setBusy(false);
     }
   };
@@ -65,14 +86,16 @@ function Login() {
 
           {authEnabled ? (
             <>
+              {sessionError && <p className="text-sm text-danger">{sessionError}</p>}
               <div className="space-y-2">
-                {GROK_PROVIDERS.map((p) => (
+                {OAUTH_PROVIDERS.map((p) => (
                   <Button
-                    key={p.providerId}
+                    key={p.provider}
                     type="button"
                     variant="secondary"
                     className="w-full"
-                    onClick={() => signIn(p.providerId, { callbackURL: "/" })}
+                    disabled={busy}
+                    onClick={() => void signInWithProvider(p.provider)}
                   >
                     Continue with {p.label}
                   </Button>
@@ -81,7 +104,7 @@ function Login() {
 
               <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-subtle">
                 <span className="h-px flex-1 bg-border" />
-                or email
+                or email and password
                 <span className="h-px flex-1 bg-border" />
               </div>
 
@@ -127,6 +150,7 @@ function Login() {
                   />
                 </div>
                 {error && <p className="text-sm text-danger">{error}</p>}
+                {notice && <p className="text-sm text-muted">{notice}</p>}
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy ? "Working…" : mode === "signup" ? "Create account" : "Sign in"}
                 </Button>
@@ -137,6 +161,7 @@ function Login() {
                 onClick={() => {
                   setMode(mode === "signup" ? "signin" : "signup");
                   setError(null);
+                  setNotice(null);
                 }}
               >
                 {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
