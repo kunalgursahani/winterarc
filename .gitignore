@@ -10,3 +10,5 @@ artifacts/
 screenshots/
 AGENTS.md
 .node_modules.lock
+
+.vercel
