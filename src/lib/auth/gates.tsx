@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
-import { authEnabled, signIn, signOut } from "./client";
-import { OAUTH_PROVIDERS } from "./providers";
+import { authEnabled, signOut } from "./client";
 import { resolveSignInGateState } from "./sign-in-gate";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 
@@ -57,24 +56,7 @@ export function SignInGate({
 }
 
 export function SignInButtons() {
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <div className="flex w-full max-w-sm flex-col gap-2">
-      {OAUTH_PROVIDERS.map((p) => (
-        <button
-          key={p.provider}
-          type="button"
-          onClick={() => void signIn(p.provider, { callbackURL: "/" }).catch((e) =>
-            setError(e instanceof Error ? e.message : "Sign-in failed"),
-          )}
-          className="w-full cursor-pointer rounded-md border border-neutral-300 px-4 py-2 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
-        >
-          Continue with {p.label}
-        </button>
-      ))}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-    </div>
-  );
+  return <Navigate to="/login" />;
 }
 
 /**

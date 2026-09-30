@@ -1,6 +1,6 @@
 # Supabase Auth and database setup
 
-Winterarc uses Supabase Auth for email/password, Google, and X sign-in. Its
+Winterarc uses Supabase Auth for email/password and phone/SMS OTP sign-in. Its
 publishable key is intentionally public; the app never uses a Supabase secret
 or service-role key. User log and goal requests carry the signed-in user's
 access token, and database access is restricted by row-level security.
@@ -11,29 +11,28 @@ In the Supabase project SQL Editor, run [`migrations/0001_winterarc.sql`](./migr
 It creates the profile and workout-log tables and policies that let each signed-in
 user access only rows whose `user_id` matches their Supabase account.
 
-## Sign-in providers
+## Sign-in methods
 
-In **Authentication → Providers**, enable Email, Google, and X (Twitter). Add
-the provider credentials from Google Cloud and X Developer Portal to Supabase's
-provider settings; do not add those OAuth secrets to this repository or Vercel.
-For Google, register the Supabase callback URL shown on the Google provider
-settings page in Google Cloud.
+In **Authentication → Sign In / Providers**, enable Email and Phone. To make
+mobile sign-in work, configure an SMS provider in **Project Settings → Auth**
+(or the Auth SMS provider settings shown by the dashboard). Add its account
+credentials there, not in this repository or Vercel. Supabase's default test
+SMS service only sends to configured test numbers; production phone sign-in
+requires a real SMS provider and may incur per-message charges.
 
 In **Authentication → URL Configuration**, set the Site URL to the deployed
-Winterarc URL and allow the deployed URL, Vercel preview URLs, local development
-URL, and the live-preview callback pattern:
+Winterarc URL and allow the deployed URL and local development URL:
 
 - `https://your-winterarc-domain.example/`
 - `https://*.vercel.app/**`
 - `http://localhost:8080/`
-- `https://*.grok-sandbox.com/oauth-popup`
 
-The app redirects OAuth back to `/oauth-popup` in an embedded preview and to
-`/` when deployed.
+Email confirmation links should redirect back to the deployed app root. Phone
+sign-in verifies an SMS OTP directly in the app.
 
 ## Vercel
 
 Import `kunalgursahani/winterarc` into Vercel. A push to `main` deploys
 automatically when the GitHub integration is enabled. No Grok auth credentials,
-Better Auth secret, Supabase service-role key, or database URL is required by
+OAuth client secrets, Supabase service-role key, or database URL is required by
 this app.

@@ -30,6 +30,7 @@ function toAppUser(user: User | null): AppUser | null {
       (typeof metadata.full_name === "string" && metadata.full_name) ||
       (typeof metadata.name === "string" && metadata.name) ||
       user.email ||
+      user.phone ||
       null,
     primaryEmail: user.email ?? null,
     profileImageUrl:
