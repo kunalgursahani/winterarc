@@ -38,7 +38,18 @@ export function assertSameSiteRequest(): void {
   const site = h.get("sec-fetch-site");
   // Non-browser client (no header), the app's own origin, or a direct
   // (address-bar/bookmark) load are all fine.
-  if (!site || site === "same-origin" || site === "none") return;
+  if (!site || site === "same-origin" || site === "same-site" || site === "none") return;
+
+  // If origin matches host, it is the app's own frontend request
+  const origin = h.get("origin");
+  const host = h.get("host");
+  if (origin && host) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost === host) return;
+    } catch {}
+  }
+
   // A top-level GET navigation (e.g. the broker's OAuth callback redirect) is
   // fine even when it's cross-site; scripted requests never set navigate mode.
   const dest = h.get("sec-fetch-dest");

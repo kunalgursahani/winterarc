@@ -7,6 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getDashboard, saveGoals, saveLog } from "@/lib/winterarc-fns";
 import type { DailyLog, DashboardPayload, UserGoals } from "@/lib/types";
 import { getLoggedDates, getWorkoutStats } from "@/lib/stats";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Calendar } from "./Calendar";
@@ -238,10 +239,28 @@ export function Dashboard() {
 
         {dashQuery.isError && (
           <div className="rounded-md border border-danger/40 bg-surface p-4 text-sm text-danger">
-            <p>Could not load your logs.</p>
-            <p className="mt-1 text-subtle">
-              Please try again. If this continues, check the database configuration.
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium text-danger">Could not load your logs.</p>
+                <p className="mt-1 text-xs text-subtle">
+                  Please try again. If this continues, verify the Supabase database tables and policies.
+                </p>
+                {(dashQuery.error as Error)?.message && (
+                  <p className="mt-2 rounded border border-danger/20 bg-danger/5 px-2.5 py-1.5 font-mono text-xs text-danger">
+                    {(dashQuery.error as Error).message}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => dashQuery.refetch()}
+                disabled={dashQuery.isFetching}
+                className="shrink-0"
+              >
+                {dashQuery.isFetching ? "Retrying..." : "Retry"}
+              </Button>
+            </div>
           </div>
         )}
 

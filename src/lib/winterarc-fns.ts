@@ -68,35 +68,52 @@ function toLog(row: LogRow): DailyLog {
 }
 
 async function ensureProfile(userId: string, accessToken: string) {
-  const { error } = await getSupabase(accessToken)
-    .from("winterarc_profiles")
-    .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
-  if (error) throw error;
+  try {
+    const { error } = await getSupabase(accessToken)
+      .from("winterarc_profiles")
+      .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
+    if (error) {
+      console.warn("[ensureProfile] Notice during profile upsert:", error.message || error);
+    }
+  } catch (err) {
+    console.warn("[ensureProfile] Could not auto-upsert profile:", err);
+  }
 }
 
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<DashboardPayload> => {
-    const supabase = getSupabase(context.supabaseAccessToken);
-    await ensureProfile(context.userId, context.supabaseAccessToken);
-    const { data: profile, error: profileError } = await supabase
-      .from("winterarc_profiles")
-      .select("target_weight, daily_protein, daily_steps, workouts_per_week")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (profileError) throw profileError;
+    try {
+      const supabase = getSupabase(context.supabaseAccessToken);
+      await ensureProfile(context.userId, context.supabaseAccessToken);
+      const { data: profile, error: profileError } = await supabase
+        .from("winterarc_profiles")
+        .select("target_weight, daily_protein, daily_steps, workouts_per_week")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (profileError) {
+        console.error("[getDashboard] profileError:", profileError);
+        throw new Error(`Profile query failed: ${profileError.message}`);
+      }
 
-    const { data: logs, error: logsError } = await supabase
-      .from("winterarc_logs")
-      .select("log_date, workouts, weight, protein, steps, notes")
-      .eq("user_id", context.userId)
-      .order("log_date", { ascending: true });
-    if (logsError) throw logsError;
+      const { data: logs, error: logsError } = await supabase
+        .from("winterarc_logs")
+        .select("log_date, workouts, weight, protein, steps, notes")
+        .eq("user_id", context.userId)
+        .order("log_date", { ascending: true });
+      if (logsError) {
+        console.error("[getDashboard] logsError:", logsError);
+        throw new Error(`Logs query failed: ${logsError.message}`);
+      }
 
-    return {
-      goals: toGoals(profile as ProfileRow | null ?? undefined),
-      logs: (logs as LogRow[] | null ?? []).map(toLog),
-    };
+      return {
+        goals: toGoals(profile as ProfileRow | null ?? undefined),
+        logs: (logs as LogRow[] | null ?? []).map(toLog),
+      };
+    } catch (err) {
+      console.error("[getDashboard] Handler error:", err);
+      throw err;
+    }
   });
 
 export const saveLog = createServerFn({ method: "POST" })
