@@ -165,7 +165,18 @@ export function Dashboard() {
     <div className="min-h-screen bg-bg text-fg">
       <header className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Mobile Hamburger Button on the LEFT */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
+
             <div className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface">
               <Snowflake className="h-4 w-4 text-accent" />
             </div>
@@ -181,43 +192,35 @@ export function Dashboard() {
             </span>
             <ThemeToggle />
             <UserButton />
-
-            {/* Mobile Hamburger Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </button>
           </div>
         </div>
 
-        {/* Mobile current active tab bar */}
-        <div className="flex items-center justify-between border-t border-border bg-surface/50 px-4 py-2.5 md:hidden">
-          <div className="flex items-center gap-2 text-xs font-medium text-fg">
+        {/* Mobile current active tab bar: button on LEFT, active indicator on RIGHT */}
+        <div className="flex items-center justify-between border-t border-border bg-surface/50 px-4 py-2 md:hidden">
+          {/* Button on the LEFT */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="flex items-center gap-1.5 rounded border border-border bg-surface px-2.5 py-1 text-xs font-medium text-fg hover:bg-surface-2"
+          >
+            {mobileMenuOpen ? <X className="h-3.5 w-3.5 text-accent" /> : <Menu className="h-3.5 w-3.5 text-accent" />}
+            <span>{mobileMenuOpen ? "Close" : "All Tabs"}</span>
+          </button>
+
+          {/* Active indicator on the RIGHT */}
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
+            <span className="text-[11px] text-subtle">Active:</span>
             {(() => {
               const current = tabs.find((t) => t.id === tab);
               const Icon = current?.icon;
               return (
-                <>
-                  {Icon && <Icon className="h-4 w-4 text-accent" />}
-                  <span className="text-subtle">Tab:</span>
-                  <span className="font-semibold text-fg">{current?.label}</span>
-                </>
+                <span className="flex items-center gap-1 font-semibold text-fg">
+                  {Icon && <Icon className="h-3.5 w-3.5 text-accent" />}
+                  {current?.label}
+                </span>
               );
             })()}
           </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            className="flex items-center gap-1.5 rounded border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg hover:bg-surface-2"
-          >
-            <span>{mobileMenuOpen ? "Close" : "All Tabs"}</span>
-            {mobileMenuOpen ? <X className="h-3 w-3" /> : <Menu className="h-3 w-3" />}
-          </button>
         </div>
 
         {/* Mobile Hamburger Drawer Menu */}
