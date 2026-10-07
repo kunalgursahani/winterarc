@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Award, Brain, CalendarDays, ChartLine, Cloud, Flame, LayoutDashboard, Share2, Snowflake, Trophy } from "lucide-react";
+import { Award, Brain, CalendarDays, ChartLine, Cloud, Flame, LayoutDashboard, Menu, Share2, Snowflake, Trophy, X } from "lucide-react";
 import { RedirectToSignIn, UserButton } from "@/lib/auth/gates";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -35,6 +35,7 @@ export function Dashboard() {
   const { user, isPending } = useCurrentUserState();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("log");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [viewMonth, setViewMonth] = useState(() => new Date(2026, 9, 1));
 
@@ -173,16 +174,84 @@ export function Dashboard() {
               <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-subtle">Training journal</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden items-center gap-1.5 text-xs text-subtle sm:flex">
               <Cloud className="h-3.5 w-3.5" />
               Synced to your account
             </span>
             <ThemeToggle />
             <UserButton />
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
         </div>
-        <nav aria-label="Main navigation" className="mx-auto flex max-w-6xl overflow-x-auto justify-start gap-1 border-t border-border px-3 sm:px-6">
+
+        {/* Mobile current active tab bar */}
+        <div className="flex items-center justify-between border-t border-border bg-surface/50 px-4 py-2.5 md:hidden">
+          <div className="flex items-center gap-2 text-xs font-medium text-fg">
+            {(() => {
+              const current = tabs.find((t) => t.id === tab);
+              const Icon = current?.icon;
+              return (
+                <>
+                  {Icon && <Icon className="h-4 w-4 text-accent" />}
+                  <span className="text-subtle">Tab:</span>
+                  <span className="font-semibold text-fg">{current?.label}</span>
+                </>
+              );
+            })()}
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="flex items-center gap-1.5 rounded border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg hover:bg-surface-2"
+          >
+            <span>{mobileMenuOpen ? "Close" : "All Tabs"}</span>
+            {mobileMenuOpen ? <X className="h-3 w-3" /> : <Menu className="h-3 w-3" />}
+          </button>
+        </div>
+
+        {/* Mobile Hamburger Drawer Menu */}
+        {mobileMenuOpen && (
+          <div className="border-t border-border bg-bg/95 px-4 py-3 shadow-xl backdrop-blur-md md:hidden">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-subtle">
+              Select View
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {tabs.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setTab(id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border p-2.5 text-xs font-medium transition-colors text-left",
+                    tab === id
+                      ? "border-accent bg-accent/10 text-accent font-semibold"
+                      : "border-border bg-surface text-muted hover:border-border-strong hover:bg-surface-2 hover:text-fg",
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4 shrink-0", tab === id ? "text-accent" : "text-subtle")} />
+                  <span className="truncate">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Navigation Tabs */}
+        <nav aria-label="Main navigation" className="mx-auto hidden max-w-6xl overflow-x-auto justify-start gap-1 border-t border-border px-3 md:flex sm:px-6">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
