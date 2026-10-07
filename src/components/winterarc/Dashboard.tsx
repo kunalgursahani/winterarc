@@ -72,14 +72,14 @@ export function Dashboard() {
 
   const tabs = useMemo(
     () => [
-      { id: "log" as const, label: "Log", icon: CalendarDays },
-      { id: "analytics" as const, label: "Analytics", icon: ChartLine },
-      { id: "calories" as const, label: "AI Calories", icon: Flame },
-      { id: "prs" as const, label: "PR Vault", icon: Trophy },
-      { id: "mindset" as const, label: "AI Coach", icon: Brain },
-      { id: "milestones" as const, label: "Milestones", icon: Award },
-      { id: "share" as const, label: "Share Card", icon: Share2 },
-      { id: "goals" as const, label: "Goals", icon: LayoutDashboard },
+      { id: "log" as const, label: "Trail", icon: CalendarDays },
+      { id: "analytics" as const, label: "Vision", icon: ChartLine },
+      { id: "calories" as const, label: "Power", icon: Flame },
+      { id: "prs" as const, label: "Strength", icon: Trophy },
+      { id: "mindset" as const, label: "Mentor", icon: Brain },
+      { id: "milestones" as const, label: "Badges", icon: Award },
+      { id: "share" as const, label: "Spotlight", icon: Share2 },
+      { id: "goals" as const, label: "Objectives", icon: LayoutDashboard },
     ],
     [],
   );
@@ -204,7 +204,7 @@ export function Dashboard() {
             className="flex items-center gap-1.5 rounded border border-border bg-surface px-2.5 py-1 text-xs font-medium text-fg hover:bg-surface-2"
           >
             {mobileMenuOpen ? <X className="h-3.5 w-3.5 text-accent" /> : <Menu className="h-3.5 w-3.5 text-accent" />}
-            <span>{mobileMenuOpen ? "Close" : "All Tabs"}</span>
+            <span>{mobileMenuOpen ? "Close" : "Navigate"}</span>
           </button>
 
           {/* Active indicator on the RIGHT */}
